@@ -8,7 +8,7 @@ import ChessHome from './components/Home/ChessHome';
 function App() {
   return (
     <div className="min-h-screen flex flex-row gap-50">
-      <SignedOut>
+      {/* <SignedOut>
        <ChessHome/>
       </SignedOut>
       <SignedIn>
@@ -17,7 +17,12 @@ function App() {
             <ChessBoard />
             <Chat />
           </div>
-      </SignedIn>
+      </SignedIn> */}
+      <SideBar />
+      <div className='flex p-0 border-amber-300'>
+        <ChessBoard />
+        <Chat />
+      </div>
     </div>
   );
 }

@@ -42,11 +42,11 @@ const ChessHome = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <ul className="flex space-x-6">
-              <li><a href="/play" className="hover:text-amber-400 transition-colors">Play</a></li>
-              <li><a href="/learn" className="hover:text-amber-400 transition-colors">Learn</a></li>
-              <li><a href="/puzzles" className="hover:text-amber-400 transition-colors">Puzzles</a></li>
-              <li><a href="/tournaments" className="hover:text-amber-400 transition-colors">Tournaments</a></li>
-              <li><a href="/community" className="hover:text-amber-400 transition-colors">Community</a></li>
+              {/* <li><a href="/play" className="hover:text-amber-400 transition-colors">Play</a></li> */}
+              {/* <li><a href="/learn" className="hover:text-amber-400 transition-colors">Learn</a></li> */}
+              {/* <li><a href="/puzzles" className="hover:text-amber-400 transition-colors">Puzzles</a></li> */}
+              {/* <li><a href="/tournaments" className="hover:text-amber-400 transition-colors">Tournaments</a></li> */}
+              {/* <li><a href="/community" className="hover:text-amber-400 transition-colors">Community</a></li> */}
             </ul>
             
             <div className="flex space-x-4 ml-6">

@@ -53,7 +53,7 @@ const SideBar = () => {
           }}
           afterSignOutUrl="/"
         />
-        <p className="text-sm font-medium text-[#6b4e31]">Signed in as {u.user.firstName}</p>
+        <p className="text-sm font-medium text-[#6b4e31]">Signed in as {u.user?.firstName}</p>
       </div>
     </aside>
   );
