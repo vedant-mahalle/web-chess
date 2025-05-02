@@ -1,4 +1,4 @@
-import { UserButton, useUser } from "@clerk/clerk-react";
+import { UserButton, UserProfile, useUser } from "@clerk/clerk-react";
 
 const SideBar = () => {
     const u = useUser();

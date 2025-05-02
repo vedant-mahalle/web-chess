@@ -12,9 +12,17 @@ export class Board {
   private currentTurn: 'white' | 'black' = 'white';
   private pendingPromotion: { position: string; color: 'white' | 'black' } | null = null;
 
-  constructor() {
-    this.initialize();
+  constructor(original?: Board) {
+    if (original) {
+      this.board = new Map(original.board);
+      this.currentTurn = original.currentTurn;
+    } else {
+      this.board = new Map();
+      this.currentTurn = 'white';
+      this.initialize();
+    }
   }
+  
 
   initialize() {
     const layout: Record<string, Piece> = {
@@ -53,29 +61,29 @@ getPendingPromotion() {
   return this.pendingPromotion;
 }
 
-movePiece(from: string, to: string): boolean {
-  const piece = this.board.get(from);
-  if (!piece || piece.color !== this.currentTurn) return false;
+// movePiece(from: string, to: string): boolean {
+//   const piece = this.board.get(from);
+//   if (!piece || piece.color !== this.currentTurn) return false;
 
-  const validMoves = piece.getValidMoves(this.board);
-  if (!validMoves.includes(to)) return false;
+//   const validMoves = piece.getValidMoves(this.board);
+//   if (!validMoves.includes(to)) return false;
 
-  // Promotion check
-  if (
-    piece.constructor.name === 'Pawn' &&
-    ((piece.color === 'white' && to.endsWith('8')) || (piece.color === 'black' && to.endsWith('1')))
-  ) {
-    this.pendingPromotion = { position: to, color: piece.color };
-    this.board.set(from, null);
-    return true;
-  }
+//   // Promotion check
+//   if (
+//     piece.constructor.name === 'Pawn' &&
+//     ((piece.color === 'white' && to.endsWith('8')) || (piece.color === 'black' && to.endsWith('1')))
+//   ) {
+//     this.pendingPromotion = { position: to, color: piece.color };
+//     this.board.set(from, null);
+//     return true;
+//   }
 
-  piece.position = to;
-  this.board.set(to, piece);
-  this.board.set(from, null);
-  this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
-  return true;
-}
+//   piece.position = to;
+//   this.board.set(to, piece);
+//   this.board.set(from, null);
+//   this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
+//   return true;
+// }
 
 promotePawn(position: string, type: 'queen' | 'rook' | 'bishop' | 'knight') {
   const color = this.pendingPromotion?.color;
@@ -93,4 +101,120 @@ promotePawn(position: string, type: 'queen' | 'rook' | 'bishop' | 'knight') {
   this.pendingPromotion = null;
   this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
 }
+
+
+  // Function to check if a king is in check
+  isKingInCheck(color: 'white' | 'black'): boolean {
+    const kingPosition = this.findKingPosition(color);
+    if (!kingPosition) return false; // If no king found (shouldn't happen)
+
+    // Check if any of the opponent's pieces can attack the king's position
+    const opponentColor = color === 'white' ? 'black' : 'white';
+    for (let [position, piece] of this.getBoardState()) {
+      if (piece && piece.color === opponentColor) {
+        const validMoves = piece.getValidMoves(this.getBoardState()); // Get all valid moves of the opponent's piece
+        if (validMoves.includes(kingPosition)) {
+          console.log('king in check');
+          return true; // If the opponent's piece can reach the king's position, it's a check
+        }
+      }
+    }
+
+    return false; // The king is safe
+  }
+
+  // Function to find the king's position
+  private findKingPosition(color: 'white' | 'black'): string | null {
+    for (let [position, piece] of this.getBoardState()) {
+      if (piece instanceof King && piece.color === color) {
+        return position; // Return the position of the king
+      }
+    }
+    return null; // If no king is found
+  }
+
+  // Restrict moves if the king is in check
+  getValidMoves(piece: Piece): string[] {
+    if (!piece) return []; // Added check to ensure piece is not null
+  
+    const allValidMoves = piece.getValidMoves(this.getBoardState());
+  
+    // If the king is in check, we need to filter the moves to only safe ones
+    if (this.isKingInCheck(piece.color)) {
+      // Check if the piece is the king and it's in check
+      if (piece instanceof King) {
+        // If the king is in check, it can only move out of check
+        return this.filterMovesToEscapeCheck(piece, allValidMoves);
+      }
+  
+      // If the piece is not the king, we need to ensure the move doesn't result in leaving the king in check
+      return allValidMoves.filter(move => this.isMoveSafe(piece, move));
+    }
+  
+    // If the king is not in check, all valid moves are allowed
+    return allValidMoves;
+  }
+
+  private filterMovesToEscapeCheck(king: King, moves: string[]): string[] {
+    return moves.filter(move => {
+      // Temporarily simulate the move
+      const tempBoard = new Board(this); // Create a temporary board to simulate the move
+      tempBoard.movePiece(king.position, move);
+  
+      // If moving to a square doesn't leave the king in check, it's a valid escape move
+      return !tempBoard.isKingInCheck(king.color);
+    });
+  }
+  
+
+  // Check if a move results in the king being safe
+  private isMoveSafe(piece: Piece, move: string): boolean {
+    if (!piece) return false; // Ensure piece is not null
+  
+    // Temporarily simulate the move
+    const tempBoard = new Board(this); // Clone the board
+    tempBoard.movePiece(piece.position, move);
+  
+    // If the king is not in check after the move, it's safe
+    return !tempBoard.isKingInCheck(piece.color);
+  }
+  
+
+  // Function to move a piece
+  movePiece(from: string, to: string): boolean {
+    const piece = this.getBoardState().get(from);
+    if (!piece || piece.color !== this.currentTurn) return false;
+
+    const validMoves = this.getValidMoves(piece);
+    if (!validMoves.includes(to)) return false;
+
+    // Perform the move
+    piece.position = to;
+    this.getBoardState().set(to, piece);
+    this.getBoardState().set(from, null);
+
+    // Switch turn after successful move
+    this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
+    return true;
+  }
+
+  // Function to check for checkmate
+  checkForCheckmate(color: 'white' | 'black'): boolean {
+    if (this.isKingInCheck(color)) {
+      const allPieces = Array.from(this.getBoardState().values()).filter(piece => piece && piece.color === color);
+      for (let piece of allPieces) {
+        if (!piece) continue; // Check if the piece is not null
+        const validMoves = piece.getValidMoves(this.getBoardState());
+        for (let move of validMoves) {
+          const tempBoard = new Board(this); // Ensure the board supports cloning
+          tempBoard.movePiece(piece.position, move);
+          if (!tempBoard.isKingInCheck(color)) {
+            return false; // If any valid move can escape check, it's not checkmate
+          }
+        }
+      }
+      return true; // If no valid move escapes check, it's checkmate
+    }
+    return false;
+  }
 }
